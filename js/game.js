@@ -1,0 +1,336 @@
+const KEY_CODE_LEFT = 37;
+const KEY_CODE_RIGHT = 39;
+const KEY_CODE_UP = 38;
+const KEY_CODE_DOWN = 40;
+
+const GAME_WIDTH = 800; // maybe read from layout
+const GAME_HEIGHT = 600; // maybe read from layout
+
+const PLAYER_WIDTH = 50;
+const PLAYER_HEIGHT = 85;
+const PLAYER_MAX_SPEED = 300.0;
+
+const BUG_WIDTH = 24;
+const BUG_HEIGHT = 24;
+const BUG_MAX_SPEED = 300.0;
+const BUG_COOLDOWN = 0.5; // seconds
+
+
+const TOP = 0;
+const RIGHT = 1;
+const BOTTOM = 2;
+const LEFT = 3;
+
+const GAME_STATE = {
+  lastTime: Date.now(),
+  leftPressed: false,
+  rightPressed: false,
+  upPressed: false,
+  downPressed: false,
+  playerX: 0,
+  playerY: 0,
+  bugCooldown: 0,
+  bugs: [],
+  gameOver: false
+};
+
+let $container = null;
+let $player = null;
+
+function init() {
+  $container = document.getElementById('game-container');
+  $player = createPlayer($container);
+}
+
+function getPlayer() {
+  return $player;
+}
+
+function getContainer() {
+  return $container;
+}
+
+function createPlayer($container) {
+  GAME_STATE.playerX = GAME_WIDTH / 2; // TODO: CENTER THE SHIT MAN
+  GAME_STATE.playerY = GAME_HEIGHT / 2;
+
+  const $player = document.createElement("img");
+  $player.src = 'img/player.png';
+  $player.className = 'player';
+  $container.appendChild($player);
+  setPosition($player, GAME_STATE.playerX, GAME_STATE.playerY);
+  
+  return $player;
+}
+
+function Bug($element, position, x, y, heading, delta, speed) {
+  this.$element = $element;
+  this.position = position;
+  this.x = x;
+  this.y = y;
+  this.heading = heading;
+  this.delta = delta;
+  this.speed = speed;
+}
+
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) ) + min;
+}
+
+function getRnd(min, max) {
+  return Math.random() * (max - min + 1) + min;
+}
+
+function getStartingBugProps() {
+  let x;
+  let y;
+
+  const position = getRndInteger(0, 3);
+  const delta = getRnd(0, 2);
+  const randomX = getRndInteger(0, GAME_WIDTH);
+  const randomY = getRndInteger(0, GAME_HEIGHT);
+  const speed = getRndInteger(BUG_MAX_SPEED / 2, BUG_MAX_SPEED);
+  const heading = getRndInteger(-1, 1);
+
+  switch(position) {
+    case TOP:
+      x = randomX;
+      y = -BUG_HEIGHT;
+      break;
+    case RIGHT:
+      x = GAME_WIDTH + BUG_WIDTH;
+      y = randomY;
+      break;
+    case BOTTOM:
+      x = randomX;
+      y = GAME_HEIGHT + BUG_HEIGHT;
+      break;
+    case LEFT:
+      x = -BUG_WIDTH;
+      y = randomY;
+      break;
+  }
+
+  return {
+    x,
+    y,
+    position,
+    delta,
+    speed,
+    heading,
+  };
+}
+
+function createBug($container) {
+  const $element = document.createElement("img");
+  $element.src = "img/bug.png";
+  $element.className = "bug";
+
+  const {
+    x,
+    y,
+    position,
+    delta,
+    speed,
+    heading,
+  } = getStartingBugProps();
+
+  $container.appendChild($element);
+
+  const bug = new Bug($element, position, x, y, heading, delta, speed);
+  GAME_STATE.bugs.push(bug);
+  // TODO: audio!
+  // const audio = new Audio("sound/sfx-laser1.ogg");
+  // audio.play();
+  setPosition($element, x, y);
+}
+
+function setPosition(el, x, y) {
+  el.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+function clampPlayer(v, min, max) {
+  if (v < min) {
+    return min;
+  } else if (v > max) {
+    return max;
+  } else {
+    return v;
+  }
+}
+
+function updatePlayer(dt) {
+  if (GAME_STATE.leftPressed) {
+    GAME_STATE.playerX -= dt * PLAYER_MAX_SPEED;
+  }
+  if (GAME_STATE.rightPressed) {
+    GAME_STATE.playerX += dt * PLAYER_MAX_SPEED;
+  }
+  if (GAME_STATE.upPressed) {
+    GAME_STATE.playerY -= dt * PLAYER_MAX_SPEED;
+  }
+  if (GAME_STATE.downPressed) {
+    GAME_STATE.playerY += dt * PLAYER_MAX_SPEED;
+  }
+
+  GAME_STATE.playerX = clampPlayer(
+    GAME_STATE.playerX,
+    0,
+    GAME_WIDTH - PLAYER_WIDTH
+  );
+
+  GAME_STATE.playerY = clampPlayer(
+    GAME_STATE.playerY,
+    0,
+    GAME_HEIGHT - PLAYER_HEIGHT
+  );
+
+  $player = getPlayer();
+  setPosition($player, GAME_STATE.playerX, GAME_STATE.playerY);
+}
+
+function getBugCooldown() {
+  return BUG_COOLDOWN; // TODO: can set here as random :P
+}
+
+function spawnBug(dt) {
+  if (GAME_STATE.bugCooldown <= 0) {
+    createBug(getContainer());
+    GAME_STATE.bugCooldown = getBugCooldown();
+  }
+  if (GAME_STATE.bugCooldown > 0) {
+    GAME_STATE.bugCooldown -= dt;
+  }
+}
+
+function updateBugs(dt) {
+  $container = getContainer();
+  const bugs = GAME_STATE.bugs;
+
+  for (let i = 0; i < bugs.length; i++) {
+    const bug = bugs[i];
+
+    checkBugIsGone($container, bug);
+    setBugPosition(bug, dt);
+
+    const r1 = bug.$element.getBoundingClientRect();
+    const player = getPlayer();
+    const r2 = player.getBoundingClientRect();
+
+    if (rectsIntersect(r1, r2)) {
+      // A bug got you
+      destroyPlayer($container, player);
+      break;
+    }
+  }
+
+  GAME_STATE.bugs = GAME_STATE.bugs.filter(e => !e.isGone);
+}
+
+function setBugPosition(bug, dt) {
+  switch (bug.position) {
+    case TOP:
+      bug.x += ((dt * bug.speed) + bug.delta) * bug.heading;
+      bug.y += dt * bug.speed;
+      break;
+    case RIGHT:
+      bug.x -= dt * bug.speed;
+      bug.y += ((dt * bug.speed) + bug.delta) * bug.heading;
+      break;
+    case BOTTOM:
+      bug.x += ((dt * bug.speed) + bug.delta) * bug.heading;
+      bug.y -= dt * bug.speed;
+      break;
+    case LEFT:
+      bug.x += dt * bug.speed;
+      bug.y += ((dt * bug.speed) + bug.delta) * bug.heading;
+      break;
+  }
+
+  setPosition(bug.$element, bug.x, bug.y);
+}
+
+function checkBugIsGone($container, bug) {
+  const doubleHeight = BUG_HEIGHT * 2;
+  const doubleWidth = BUG_WIDTH * 2;
+
+  const TOP_BOUNDARY = 0 - doubleHeight;
+  const RIGHT_BOUNDARY = GAME_WIDTH + doubleWidth;
+  const BOTTOM_BOUNDARY = GAME_HEIGHT + doubleHeight;
+  const LEFT_BOUNDARY = 0 - doubleWidth;
+
+  // how do I know I am gone?
+  if (bug.x > RIGHT_BOUNDARY
+    || bug.x < LEFT_BOUNDARY
+    || bug.y < TOP_BOUNDARY
+    || bug.y > BOTTOM_BOUNDARY) {
+    destroyBug($container, bug);
+  }
+}
+
+function destroyBug($container, bug) {
+  $container.removeChild(bug.$element);
+  bug.isGone = true;
+}
+
+function rectsIntersect(r1, r2) {
+  return !(
+    r2.left > r1.right ||
+    r2.right < r1.left ||
+    r2.top > r1.bottom ||
+    r2.bottom < r1.top
+  );
+}
+
+function destroyPlayer($container, player) {
+  $container.removeChild(player);
+  GAME_STATE.gameOver = true;
+  // const audio = new Audio("sound/sfx-lose.ogg");
+  // audio.play();
+  console.log('YOU LOSE');
+}
+
+function gameLoop() {
+  const currentTime = Date.now();
+  const dt = (currentTime - GAME_STATE.lastTime) / 1000.0;
+
+  if (GAME_STATE.gameOver) {
+    return;
+  }
+
+  updatePlayer(dt);
+  spawnBug(dt);
+  updateBugs(dt);
+
+  GAME_STATE.lastTime = currentTime;
+  window.requestAnimationFrame(gameLoop);
+}
+
+function onKeyDown(e) {
+  if (e.keyCode === KEY_CODE_LEFT) {
+    GAME_STATE.leftPressed = true;
+  } else if (e.keyCode === KEY_CODE_RIGHT) {
+    GAME_STATE.rightPressed = true;
+  } else if (e.keyCode === KEY_CODE_UP) {
+    GAME_STATE.upPressed = true;
+  } else if (e.keyCode === KEY_CODE_DOWN) {
+    GAME_STATE.downPressed = true;
+  }
+}
+
+function onKeyUp(e) {
+  if (e.keyCode === KEY_CODE_LEFT) {
+    GAME_STATE.leftPressed = false;
+  } else if (e.keyCode === KEY_CODE_RIGHT) {
+    GAME_STATE.rightPressed = false;
+  } else if (e.keyCode === KEY_CODE_UP) {
+    GAME_STATE.upPressed = false;
+  } else if (e.keyCode === KEY_CODE_DOWN) {
+    GAME_STATE.downPressed = false;
+  }
+}
+
+init();
+window.addEventListener("keydown", onKeyDown);
+window.addEventListener("keyup", onKeyUp);
+window.requestAnimationFrame(gameLoop);
