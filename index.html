@@ -6,15 +6,98 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Ya la jato</title>
   <link rel="stylesheet" href="css/main.css">
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon"/>
+  <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon"/>
+  <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
 </head>
 <body>
   <main class="container">
-    <div id="game-container"></div>
-    <footer>
-      C:
-    </footer>
+    <section id="loader-view">
+      <div class="loader"></div>
+    </section>
+    <section id="instructions-view" class="hide">
+      <div class="game-title">
+        YA LA JATO
+      </div>
+      <div class="instructions-container">
+        <div>
+          <img src="img/dev.png" alt="Dev" />
+        </div>
+        <div>
+          <p>
+            Eres un <em>dev</em> en tu miserable jornada laboral esperando que no te salpique algún bug del silo que no has construido.
+          </p>
+          <p>
+            Si llegas a esquivar todos los bugs desde las 08:00 hasta las 17:00 eres libre,
+            caso contrario te espera una deliciosa amanecida tarrajeando las tuberías del aniego
+          </p>
+          <p>
+            <br />
+            Esquiva los bugs utilizando las flechas <br />
+            (&#x2190; &#x2191; &#x2192; &#x2193;)
+          </p>
+        </div>
+      </div>
+      <div class="button-container">
+        <button type="button">Presiona la barra para empezar</button>
+      </div>
+      <footer>
+        <!-- <div>Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div> -->
+      </footer>
+    </section>
+    <section id="game-view" class="hide">
+      <div class="game-title-in-game">
+        YA LA JATO
+      </div>
+      <div class="clock-container">
+        <div>Jornada laboral</div>
+        <div id="game-clock"></div>
+      </div>
+      <div id="game-container"></div>
+    </section>
+    <section id="lose-view" class="hide">
+      <div class="lose-title">
+        GG
+      </div>
+      <div class="lose-image-wrapper">
+        <img src="img/rage.webp" class="lose-image" alt="GG" />
+      </div>
+      <div class="lose-message">
+        <div>
+          Te reportaron terrible bug y toca amanecida.
+        </div>
+        <div>
+          Dile chau al fifita.
+        </div>
+        <p>
+          <em>"Lpm mejor me quedaba friendo papas."</em>
+        </p>
+      </div>
+      <div class="button-container">
+        <button type="button">Presiona la barra e Inténtalo de nuevo</button>
+      </div>
+    </section>
+    <section id="win-view" class="hide">
+      <div class="win-title">
+          ¡La jatooooo!
+      </div>
+      <div class="win-image-wrapper">
+        <img src="img/win.png" alt="Fuck Yeah" />
+      </div>
+      <div class="win-message">
+        <div>
+          Eres libre hasta una nueva jornada laboral.
+        </div>
+        <div>
+          Ruega que no estén acaparando el FIFA.
+        </div>
+      </div>
+      <div class="button-container">
+        <button type="button">¡Soy un masoquista y quiero volver a mi jornada ya!</button>
+        <em class="hint">(presiona la barra)</em>
+      </div>
+    </section>
   </main>
-  <!-- <div>Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div> -->
   <script src="js/game.js"></script>
 </body>
 </html>

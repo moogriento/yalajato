@@ -2,6 +2,7 @@ const KEY_CODE_LEFT = 37;
 const KEY_CODE_RIGHT = 39;
 const KEY_CODE_UP = 38;
 const KEY_CODE_DOWN = 40;
+const KEY_CODE_SPACE = 32;
 
 const GAME_WIDTH = 800; // maybe read from layout
 const GAME_HEIGHT = 600; // maybe read from layout
@@ -12,34 +13,72 @@ const PLAYER_MAX_SPEED = 300.0;
 
 const BUG_WIDTH = 24;
 const BUG_HEIGHT = 24;
-const BUG_MAX_SPEED = 300.0;
-const BUG_COOLDOWN = 0.5; // seconds
-
+const BUG_MAX_SPEED = 400.0;
+const BUG_COOLDOWN = 0.3; // seconds
 
 const TOP = 0;
 const RIGHT = 1;
 const BOTTOM = 2;
 const LEFT = 3;
 
-const GAME_STATE = {
-  lastTime: Date.now(),
-  leftPressed: false,
-  rightPressed: false,
-  upPressed: false,
-  downPressed: false,
-  playerX: 0,
-  playerY: 0,
-  bugCooldown: 0,
-  bugs: [],
-  gameOver: false
-};
+const GAME_LENGTH = 30; // seconds
+const GAME_MINUTES = 9 * 60; // 9 hours * 60 minutes
+
+let GAME_STATE = {};
 
 let $container = null;
 let $player = null;
+let $gameClock = null;
+let gameTimer = 0;
+let gameSeconds = 0;
 
-function init() {
+// from 8 to 5 survive = 9 hours = 9 * 60 minutes
+
+function resetState() {
+  return {
+    lastTime: Date.now(),
+    leftPressed: false,
+    rightPressed: false,
+    upPressed: false,
+    downPressed: false,
+    playerX: 0,
+    playerY: 0,
+    bugCooldown: 0,
+    bugs: [],
+    gameOver: false,
+  }
+}
+
+function clearDOM($container) {
+  const bugs = document.querySelectorAll('.bug');
+
+  for(let i = 0; i < bugs.length; i++) {
+    $container.removeChild(bugs[i]);
+  }
+
+  const player = document.querySelector('.player');
+
+  if (player) {
+    $container.removeChild(player);
+  }
+}
+
+function initGame() {
+  window.removeEventListener('keydown', onKeyDownInitGame);
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+
+  GAME_STATE = resetState();
+
+  gameTimer = Date.now();
   $container = document.getElementById('game-container');
+  $gameClock = document.getElementById('game-clock');
+
+  clearDOM($container);
+
   $player = createPlayer($container);
+
+  window.requestAnimationFrame(gameLoop);
 }
 
 function getPlayer() {
@@ -51,10 +90,10 @@ function getContainer() {
 }
 
 function createPlayer($container) {
-  GAME_STATE.playerX = GAME_WIDTH / 2; // TODO: CENTER THE SHIT MAN
-  GAME_STATE.playerY = GAME_HEIGHT / 2;
+  GAME_STATE.playerX = GAME_WIDTH / 2 - PLAYER_WIDTH; // TODO: CENTER THE SHIT MAN
+  GAME_STATE.playerY = GAME_HEIGHT / 2 - PLAYER_HEIGHT;
 
-  const $player = document.createElement("img");
+  const $player = document.createElement('img');
   $player.src = 'img/player.png';
   $player.className = 'player';
   $container.appendChild($player);
@@ -122,9 +161,9 @@ function getStartingBugProps() {
 }
 
 function createBug($container) {
-  const $element = document.createElement("img");
-  $element.src = "img/bug.png";
-  $element.className = "bug";
+  const $element = document.createElement('img');
+  $element.src = 'img/bug.png';
+  $element.className = 'bug';
 
   const {
     x,
@@ -140,8 +179,6 @@ function createBug($container) {
   const bug = new Bug($element, position, x, y, heading, delta, speed);
   GAME_STATE.bugs.push(bug);
   // TODO: audio!
-  // const audio = new Audio("sound/sfx-laser1.ogg");
-  // audio.play();
   setPosition($element, x, y);
 }
 
@@ -189,6 +226,33 @@ function updatePlayer(dt) {
   setPosition($player, GAME_STATE.playerX, GAME_STATE.playerY);
 }
 
+function updateClock() {
+  const currentTime = Date.now();
+  const clock = getClockHHMM(currentTime - gameTimer);
+
+  $gameClock.innerHTML = clock;
+
+  // TODO: SET WIN FLAG!
+  if (currentTime - gameTimer >= GAME_LENGTH * 1000) {
+    GAME_STATE.gameOver = true;
+    setUpWin();
+  }
+}
+
+function getClockHHMM(ellapsedTime) {
+  const minutesInGame = (ellapsedTime * GAME_MINUTES) / (GAME_LENGTH * 1000);
+
+  // starts at 08:00
+  const hours = Math.floor(minutesInGame / 60);
+  const minutes = Math.floor(minutesInGame % 60);
+
+  if (hours >= 9) {
+    return '17:00';
+  }
+
+  return `${(hours + 8).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
 function getBugCooldown() {
   return BUG_COOLDOWN; // TODO: can set here as random :P
 }
@@ -220,6 +284,7 @@ function updateBugs(dt) {
     if (rectsIntersect(r1, r2)) {
       // A bug got you
       destroyPlayer($container, player);
+      setUpLose();
       break;
     }
   }
@@ -285,9 +350,7 @@ function rectsIntersect(r1, r2) {
 function destroyPlayer($container, player) {
   $container.removeChild(player);
   GAME_STATE.gameOver = true;
-  // const audio = new Audio("sound/sfx-lose.ogg");
-  // audio.play();
-  console.log('YOU LOSE');
+  // TODO: audio
 }
 
 function gameLoop() {
@@ -301,6 +364,7 @@ function gameLoop() {
   updatePlayer(dt);
   spawnBug(dt);
   updateBugs(dt);
+  updateClock(dt);
 
   GAME_STATE.lastTime = currentTime;
   window.requestAnimationFrame(gameLoop);
@@ -330,7 +394,91 @@ function onKeyUp(e) {
   }
 }
 
-init();
-window.addEventListener("keydown", onKeyDown);
-window.addEventListener("keyup", onKeyUp);
-window.requestAnimationFrame(gameLoop);
+function showView(view) {
+  const VIEWS = {
+    loader: document.getElementById('loader-view'),
+    instructions: document.getElementById('instructions-view'),
+    game: document.getElementById('game-view'),
+    win: document.getElementById('win-view'),
+    lose: document.getElementById('lose-view')
+  };
+
+  Object.keys(VIEWS).forEach(function(view) {
+    VIEWS[view].classList.remove('show');
+    VIEWS[view].classList.add('hide');
+  });
+
+  VIEWS[view].classList.remove('hide');
+  VIEWS[view].classList.add('show');
+}
+
+function setUpKeydownGo() {
+  window.addEventListener('keydown', onKeyDownInitGame);
+}
+
+function initApp() {
+  setTimeout(function() {
+    showView('instructions');
+    setUpKeydownGo();
+  }, 1000);
+}
+
+function onKeyDownInitGame(e){
+  if (e.keyCode === KEY_CODE_SPACE) {
+    showView('game');
+    initGame();
+  }
+}
+
+function setUpWin() {
+  setTimeout(function() {
+    showView('win');
+    setUpKeydownGo();
+  }, 2500);
+}
+
+function setUpLose() {
+  setTimeout(function() {
+    showView('lose');
+    setUpKeydownGo();
+  }, 1500);
+}
+
+function setupApp() {
+  preloadImages([
+    '/img/bug.png',
+    '/img/dev.png',
+    '/img/player.png',
+    '/img/rage.webp',
+    '/img/win.png',
+    '/img/background.jpg'
+  ], function() {
+    initApp();
+  });
+}
+
+function preloadImages(urls, callback){
+  const toBeLoadedNumber = urls.length;
+  let loadedCounter = 0;
+
+  urls.forEach(function(url) {
+    preloadImage(url, function() {
+      loadedCounter++;
+      console.log('Number of loaded images: ' + loadedCounter);
+
+      if(loadedCounter == toBeLoadedNumber){
+        callback();
+      }
+    });
+  });
+}
+
+function preloadImage(url, callback){
+  const img = new Image();
+  img.onload = callback;
+  img.src = url;
+}
+
+// Let's call it:
+
+setupApp();
