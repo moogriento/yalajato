@@ -1,3 +1,12 @@
+import '../css/main.css';
+import '../img/background.jpg';
+import '../img/bug.png';
+import '../img/dev.png';
+import '../img/favicon.ico';
+import '../img/player.png';
+import '../img/rage.webp';
+import '../img/win.png';
+
 const KEY_CODE_LEFT = 37;
 const KEY_CODE_RIGHT = 39;
 const KEY_CODE_UP = 38;
@@ -14,7 +23,7 @@ const PLAYER_MAX_SPEED = 300.0;
 const BUG_WIDTH = 24;
 const BUG_HEIGHT = 24;
 const BUG_MAX_SPEED = 400.0;
-const BUG_COOLDOWN = 0.3; // seconds
+const BUG_COOLDOWN = 0.2; // seconds
 
 const TOP = 0;
 const RIGHT = 1;
@@ -464,7 +473,6 @@ function preloadImages(urls, callback){
   urls.forEach(function(url) {
     preloadImage(url, function() {
       loadedCounter++;
-      console.log('Number of loaded images: ' + loadedCounter);
 
       if(loadedCounter == toBeLoadedNumber){
         callback();

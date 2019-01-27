@@ -137,7 +137,7 @@ p {
 
 #game-container::after {
   content: "";
-  background: url(../img/background.jpg);
+  background: url(/img/background.jpg);
   opacity: 0.3;
   top: 0;
   left: 0;
