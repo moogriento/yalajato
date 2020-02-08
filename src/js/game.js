@@ -4,7 +4,7 @@ import '../img/bug.png';
 import '../img/dev.png';
 import '../img/favicon.ico';
 import '../img/player.png';
-import '../img/rage.webp';
+import '../img/rage.gif';
 import '../img/win.png';
 
 const KEY_CODE_LEFT = 37;
@@ -259,7 +259,13 @@ function getClockHHMM(ellapsedTime) {
     return '17:00';
   }
 
-  return `${(hours + 8).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${format2chars(hours + 8)}:${format2chars(minutes)}`;
+}
+
+function format2chars(value) {
+  const newVal = '0' + value;
+
+  return newVal.substr(newVal.length - 2);
 }
 
 function getBugCooldown() {
@@ -434,9 +440,13 @@ function initApp() {
 
 function onKeyDownInitGame(e){
   if (e.keyCode === KEY_CODE_SPACE) {
-    showView('game');
-    initGame();
+    startGame();
   }
+}
+
+function startGame() {
+  showView('game');
+  initGame();
 }
 
 function setUpWin() {
@@ -454,11 +464,21 @@ function setUpLose() {
 }
 
 function setupApp() {
+  const startButtons = [
+    document.getElementById('button-start'),
+    document.getElementById('button-reset'),
+    document.getElementById('button-again')
+  ];
+
+  startButtons.forEach((button) => {
+    button.addEventListener('click', startGame);
+  });
+
   preloadImages([
     '/img/bug.png',
     '/img/dev.png',
     '/img/player.png',
-    '/img/rage.webp',
+    '/img/rage.gif',
     '/img/win.png',
     '/img/background.jpg'
   ], function() {
@@ -486,7 +506,5 @@ function preloadImage(url, callback){
   img.onload = callback;
   img.src = url;
 }
-
-// Let's call it:
 
 setupApp();

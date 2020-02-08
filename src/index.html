@@ -18,6 +18,9 @@
       <div class="game-title">
         YA LA JATO
       </div>
+      <div class="mobile-message">
+        Este juego funciona sólo en PC. <em>Quién diría...</em>
+      </div>
       <div class="instructions-container">
         <div>
           <img src="img/dev.png" alt="Dev" />
@@ -28,7 +31,7 @@
           </p>
           <p>
             Si llegas a esquivar todos los bugs desde las 08:00 hasta las 17:00 eres libre,
-            caso contrario te espera una deliciosa amanecida tarrajeando las tuberías del aniego
+            caso contrario te espera una deliciosa amanecida tarrajeando las tuberías del aniego.
           </p>
           <p>
             <br />
@@ -37,11 +40,10 @@
           </p>
         </div>
       </div>
-      <div class="button-container">
-        <button type="button">Presiona la barra para empezar</button>
+      <div class="button-container initial-buttons">
+        <button id="button-start" type="button">Pulsa la barra para empezar</button>
       </div>
       <footer>
-        <!-- <div>Icons made by <a href="https://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" 			    title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" 			    title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div> -->
       </footer>
     </section>
     <section id="game-view" class="hide">
@@ -59,7 +61,7 @@
         GG
       </div>
       <div class="lose-image-wrapper">
-        <img src="img/rage.webp" class="lose-image" alt="GG" />
+        <img src="img/rage.gif" class="lose-image" alt="GG" />
       </div>
       <div class="lose-message">
         <div>
@@ -73,7 +75,7 @@
         </p>
       </div>
       <div class="button-container">
-        <button type="button">Presiona la barra e Inténtalo de nuevo</button>
+        <button id="button-reset" type="button">Pulsa la barra e Inténtalo de nuevo</button>
       </div>
     </section>
     <section id="win-view" class="hide">
@@ -92,8 +94,12 @@
         </div>
       </div>
       <div class="button-container">
-        <button type="button">¡Soy un masoquista y quiero volver a mi jornada ya!</button>
-        <em class="hint">(presiona la barra)</em>
+        <div>
+          <button id="button-again" type="button">¡Soy un masoquista y quiero volver a mi jornada ya!</button>
+        </div>
+        <div>
+          <em class="hint">(pulsa la barra espaciadora)</em>
+        </div>
       </div>
     </section>
   </main>
